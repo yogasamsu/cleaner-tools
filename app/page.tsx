@@ -67,6 +67,38 @@ function extractNameAndTitle(
   };
 }
 
+function isValidName(line: string): boolean {
+  if (!line) return false;
+
+  // noise we must skip
+  const blacklist = [
+    "linkedin",
+    "pengikut",
+    "selamat datang",
+    "email atau telepon",
+    "kata sandi",
+    "login",
+    "forgot",
+    "gambir",
+    "jakarta",
+    "website",
+    "terjemahkan halaman ini",
+  ];
+
+  if (blacklist.some((b) => line.toLowerCase().includes(b))) return false;
+
+  // pattern: Name - Title
+  if (/^([A-Z][a-z]+)(\s[A-Z][a-z]+)+\s-\s.+/.test(line)) return true;
+
+  // pattern ALL CAPS name
+  if (/^[A-Z\s]{5,}$/.test(line)) return true;
+
+  // pattern: 2–4 capitalized words (likely name)
+  if (/^([A-Z][a-z]+)(\s[A-Z][a-z]+){1,3}$/.test(line)) return true;
+
+  return false;
+}
+
 function parseRaw(text: string): Contact[] {
   const lines = text
     .split("\n")
@@ -76,16 +108,8 @@ function parseRaw(text: string): Contact[] {
   const records: string[][] = [];
   let current: string[] = [];
 
-  const isStartOfRecord = (line: string) => {
-    const hasDashName = /^.+\s+-\s+.+/.test(line);
-    const looksLikeLinkedInProfile = line.toLowerCase().includes("linkedin ·");
-    const hasURL = /linkedin\.com/i.test(line);
-
-    return hasDashName || looksLikeLinkedInProfile || hasURL;
-  };
-
   for (const line of lines) {
-    if (isStartOfRecord(line)) {
+    if (isValidName(line)) {
       if (current.length) records.push(current);
       current = [line];
     } else {
@@ -95,19 +119,22 @@ function parseRaw(text: string): Contact[] {
 
   if (current.length) records.push(current);
 
-  return records.map((blockLines) => {
-    const block = blockLines.join(" ");
-    const firstLine = blockLines[0];
+  return records
+    .map((block) => {
+      const blockText = block.join(" ");
+      const firstLine = block[0];
 
-    const { name, title } = extractNameAndTitle(firstLine);
-    const email = extractEmail(block);
-    const phone = extractPhone(block);
-    const url = extractUrl(block);
+      const { name, title } = extractNameAndTitle(firstLine);
+      const email = extractEmail(blockText);
+      const phone = extractPhone(blockText);
+      const url = extractUrl(blockText);
 
-    return { name, title, phone, email, url };
-  }).filter(
-    (c) => c.name || c.title || c.phone || c.email || c.url
-  );
+      // ignore junk blocks
+      if (!email && !phone && !name) return null;
+
+      return { name, title, phone, email, url };
+    })
+    .filter(Boolean) as Contact[];
 }
 
 
