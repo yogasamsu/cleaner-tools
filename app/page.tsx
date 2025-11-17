@@ -175,6 +175,18 @@ export default function HomePage() {
             untuk di-convert jadi tabel kontak.
           </p>
         </header>
+      <p className="text-sm text-slate-300 space-y-2">
+      <strong className="text-slate-100">🔍 Recommended Google Search Query:</strong>
+      <pre className="mt-2 text-xs bg-slate-800 p-3 rounded-xl overflow-auto">
+      {`site:linkedin.com/in ("Phone" OR "Telepon" OR "WA" OR "Whatsapp") ("+62" OR "021") (Procurement OR Pengadaan) "Nama Perusahaan Target"`}
+      </pre>
+
+  <ul className="mt-3 text-xs space-y-1 text-slate-400">
+    <li>• Tambahkan jabatan spesifik: "Procurement Manager" atau "Purchasing Lead"</li>
+    <li>• Tambahkan lokasi: "Jakarta" / "Surabaya" / "Makassar"</li>
+    <li>• Gunakan tanda kutip ("") agar hasil lebih presisi</li>
+  </ul>
+</p>
 
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="space-y-3">
