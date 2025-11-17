@@ -68,43 +68,48 @@ function extractNameAndTitle(
 }
 
 function parseRaw(text: string): Contact[] {
-  // Pisah per "blok" dengan baris kosong
-  const blocks = text
-    .split(/\n\s*\n/)
-    .map((b) => b.trim())
+  const lines = text
+    .split("\n")
+    .map((l) => l.trim())
     .filter(Boolean);
 
-  const contacts: Contact[] = blocks.map((block) => {
-    const lines = block
-      .split("\n")
-      .map((l) => l.trim())
-      .filter(Boolean);
+  const records: string[][] = [];
+  let current: string[] = [];
 
-    const firstLine = lines[0] || "";
+  const isStartOfRecord = (line: string) => {
+    const hasDashName = /^.+\s+-\s+.+/.test(line);
+    const looksLikeLinkedInProfile = line.toLowerCase().includes("linkedin ·");
+    const hasURL = /linkedin\.com/i.test(line);
+
+    return hasDashName || looksLikeLinkedInProfile || hasURL;
+  };
+
+  for (const line of lines) {
+    if (isStartOfRecord(line)) {
+      if (current.length) records.push(current);
+      current = [line];
+    } else {
+      current.push(line);
+    }
+  }
+
+  if (current.length) records.push(current);
+
+  return records.map((blockLines) => {
+    const block = blockLines.join(" ");
+    const firstLine = blockLines[0];
+
     const { name, title } = extractNameAndTitle(firstLine);
     const email = extractEmail(block);
     const phone = extractPhone(block);
     const url = extractUrl(block);
 
-    return {
-      name,
-      title,
-      phone,
-      email,
-      url,
-    };
-  });
-
-  // Filter yang benar-benar kosong semua
-  return contacts.filter(
-    (c) =>
-      c.name ||
-      c.title ||
-      c.phone ||
-      c.email ||
-      c.url
+    return { name, title, phone, email, url };
+  }).filter(
+    (c) => c.name || c.title || c.phone || c.email || c.url
   );
 }
+
 
 function contactsToCSV(contacts: Contact[]): string {
   const header = [
